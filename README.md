@@ -6,6 +6,36 @@ El proyecto fue realizado como apoyo para una actividad vinculada a IdMKids. No 
 
 La propuesta busca ofrecer una experiencia simple, rápida y fácil de entender, especialmente pensada para público infantil.
 
+## Capturas
+
+### Selección de vehículos
+
+El Jugador 1 selecciona primero su vehículo:
+
+![Selección de vehículo del Jugador 1](assets/imagenes/screenshots/showroom-1.png)
+
+Luego el Jugador 2 selecciona entre los vehículos restantes:
+
+![Selección de vehículo del Jugador 2](assets/imagenes/screenshots/showroom-2.png)
+
+### Salida
+
+Antes de comenzar la carrera se muestra una secuencia de cinco luces acompañada por efectos de sonido:
+
+![Secuencia de salida](assets/imagenes/screenshots/lights-1.png)
+
+### Carrera
+
+Durante la carrera los vehículos avanzan automáticamente. Los jugadores controlan únicamente su posición lateral para evitar obstáculos y recoger power-ups.
+
+![Carrera](assets/imagenes/screenshots/race.png)
+
+### Resultados
+
+Al finalizar se muestran el ganador y los tiempos obtenidos por ambos jugadores:
+
+![Resultados](assets/imagenes/screenshots/podium.png)
+
 ## Características
 
 - Juego local para 2 jugadores.
@@ -64,7 +94,7 @@ Reduce temporalmente la velocidad del jugador que lo atraviesa.
 
 Los power-ups solo afectan a los jugadores. Los vehículos controlados por CPU los ignoran.
 
-## Selección de vehículos
+## Selección de vehículos en el concesionario
 
 Los jugadores deben elegir vehículos distintos.
 
