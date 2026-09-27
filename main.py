@@ -1,125 +1,163 @@
+import os
+import sys
+
 import pygame
 
 from config import WIDTH, HEIGHT, FPS
+
+# ================================================================
+# PYINSTALLER / RUTAS
+# ================================================================
+#
+# Cuando corre empaquetado con PyInstaller, los assets se extraen
+# temporalmente en sys._MEIPASS.
+#
+# Hacemos chdir ahí para que todas las rutas relativas del proyecto
+# sigan funcionando igual que en desarrollo.
+# ================================================================
+
+if getattr(sys, "frozen", False):
+    os.chdir(sys._MEIPASS)
+
+
 from game import Game
 from ui.screens import ScreenManager
+
+# ================================================================
+# DISPLAY
+# ================================================================
 
 
 def create_display(fullscreen):
     if fullscreen:
-        return pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        return pygame.display.set_mode(
+            (0, 0),
+            pygame.FULLSCREEN,
+        )
 
-    return pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+    return pygame.display.set_mode(
+        (WIDTH, HEIGHT),
+        pygame.RESIZABLE,
+    )
+
+
+# ================================================================
+# MAIN
+# ================================================================
 
 
 def main():
     pygame.init()
 
-    if not pygame.mixer.get_init():
-        pygame.mixer.init()
-
-    # ---------------------------------------------------------
-    # Pantalla real
-    # ---------------------------------------------------------
-
-    fullscreen = True
-    display = create_display(fullscreen)
-
-    # Ahora que YA existe un modo de video,
-    # podemos usar convert_alpha().
-    icon = pygame.image.load("assets/imagenes/icon.png").convert_alpha()
-
-    pygame.display.set_icon(icon)
-    pygame.display.set_caption("Furia Turbo")
-
-    # ---------------------------------------------------------
-    # Superficie interna del juego
-    # ---------------------------------------------------------
-
-    game_surface = pygame.Surface((WIDTH, HEIGHT))
-
-    clock = pygame.time.Clock()
-
-    screens = ScreenManager(game_surface)
-
-    game = None
-
-    running = True
-    pygame.init()
+    # ------------------------------------------------------------
+    # Audio
+    # ------------------------------------------------------------
 
     if not pygame.mixer.get_init():
         pygame.mixer.init()
 
-    pygame.display.set_caption("Furia Turbo")
-    icon = pygame.image.load("assets/imagenes/icon.png").convert_alpha()
-
-    pygame.display.set_icon(icon)
-
-    # ---------------------------------------------------------
-    # Pantalla real
-    # ---------------------------------------------------------
+    # ------------------------------------------------------------
+    # Ventana real
+    # ------------------------------------------------------------
 
     fullscreen = True
 
     display = create_display(fullscreen)
 
-    # ---------------------------------------------------------
-    # Superficie interna del juego
+    pygame.display.set_caption("Furia Turbo")
+
+    # ------------------------------------------------------------
+    # Icono
+    # ------------------------------------------------------------
+
+    icon_path = os.path.join(
+        "assets",
+        "imagenes",
+        "icon.png",
+    )
+
+    if os.path.exists(icon_path):
+        icon = pygame.image.load(icon_path).convert_alpha()
+
+        pygame.display.set_icon(icon)
+
+    # ------------------------------------------------------------
+    # Superficie interna
     #
-    # TODO se dibuja siempre en 1280x720.
-    # Después lo escalamos a la pantalla real.
-    # ---------------------------------------------------------
+    # Todo el juego se dibuja SIEMPRE en 1280x720.
+    # Después se escala a la resolución real.
+    # ------------------------------------------------------------
 
-    game_surface = pygame.Surface((WIDTH, HEIGHT))
+    game_surface = pygame.Surface(
+        (
+            WIDTH,
+            HEIGHT,
+        )
+    )
 
     clock = pygame.time.Clock()
 
+    # ------------------------------------------------------------
+    # UI / Estados
+    # ------------------------------------------------------------
+
     screens = ScreenManager(game_surface)
 
+    # El objeto Game recién se crea
+    # después de que J1 y J2 eligen autos.
     game = None
 
     running = True
+
+    # ============================================================
+    # LOOP PRINCIPAL
+    # ============================================================
 
     while running:
         dt = clock.tick(FPS) / 1000.0
 
-        # =====================================================
+        # ========================================================
         # EVENTOS
-        # =====================================================
+        # ========================================================
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
             if event.type == pygame.KEYDOWN:
-                # ---------------------------------------------
-                # ESC
-                # ---------------------------------------------
+
+                # ------------------------------------------------
+                # ESC = salir
+                # ------------------------------------------------
 
                 if event.key == pygame.K_ESCAPE:
                     running = False
 
-                # ---------------------------------------------
-                # F11
-                # Fullscreen / ventana
-                # ---------------------------------------------
+                # ------------------------------------------------
+                # F11 = fullscreen / ventana
+                # ------------------------------------------------
 
                 elif event.key == pygame.K_F11:
                     fullscreen = not fullscreen
 
                     display = create_display(fullscreen)
 
-            # Las pantallas manejan su input
-            # excepto durante la carrera.
+            # Las pantallas manejan input propio
+            # mientras no estamos corriendo.
             if screens.state != "race":
                 screens.handle_event(event)
 
-        # =====================================================
-        # UI / MENÚS
-        # =====================================================
+        # ========================================================
+        # MENÚ / SHOWROOM / LOADING / COUNTDOWN / RESULTS
+        # ========================================================
 
         if screens.state != "race":
             screens.update(dt)
+
+            # ----------------------------------------------------
+            # Cuando termina el semáforo:
+            # creamos la carrera con los autos elegidos.
+            # ----------------------------------------------------
 
             if screens.countdown_finished():
                 (
@@ -139,11 +177,14 @@ def main():
 
             screens.draw()
 
-        # =====================================================
+        # ========================================================
         # CARRERA
-        # =====================================================
+        # ========================================================
 
         else:
+            # Seguridad:
+            # si por alguna razón estamos en race
+            # sin Game creado, volvemos al título.
             if game is None:
                 screens.state = "title"
 
@@ -154,18 +195,22 @@ def main():
 
                 game.draw()
 
+                # ------------------------------------------------
+                # Fin de carrera
+                # ------------------------------------------------
+
                 if game.race.finished:
                     screens.go_to_results(game)
 
-        # =====================================================
+        # ========================================================
         # ESCALADO A PANTALLA REAL
-        # =====================================================
+        # ========================================================
 
         display_width = display.get_width()
 
         display_height = display.get_height()
 
-        # Escalamos manteniendo proporción 16:9.
+        # Mantener proporción 16:9.
         scale = min(
             display_width / WIDTH,
             display_height / HEIGHT,
@@ -199,6 +244,10 @@ def main():
         )
 
         pygame.display.flip()
+
+    # ============================================================
+    # CIERRE
+    # ============================================================
 
     pygame.quit()
 
